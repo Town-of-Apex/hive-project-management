@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AppShell } from "@/components/layout/AppShell"
 import { HomePage } from "@/pages/HomePage"
+import { ProjectsPage } from "@/pages/ProjectsPage"
 import { PermitsPage } from "@/pages/PermitsPage"
 import { ComponentsPage } from "@/pages/ComponentsPage"
 import { ColorsPage } from "@/pages/ColorsPage"
@@ -14,6 +15,7 @@ function App() {
         {/* AppShell provides the layout (Header, Footer, Toast) to all child routes */}
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/permits" element={<PermitsPage />} />
           <Route path="/components" element={<ComponentsPage />} />
           <Route path="/colors" element={<ColorsPage />} />

@@ -58,8 +58,8 @@ export function HomePage() {
         {/* ── Page title ───────────────────────────────────────────── */}
         <PageHeader
           overline="Home"
-          title="Town of Apex Template App"
-          subtitle="A ready-to-use starting point for building a professional web application using the Town of Apex Design System."
+          title="Hive"
+          subtitle="A project management platform built by and for the Town of Apex."
         />
 
         <Divider />

@@ -22,6 +22,11 @@ export const NAV_ITEMS: NavItem[] = [
     path:  "/",
   },
   {
+    id:    "projects",
+    label: "Projects",
+    path:  "/projects",
+  },
+  {
     id:    "permits",
     label: "Permits",
     path:  "/permits",
