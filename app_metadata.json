@@ -1,8 +1,8 @@
 {
-    "title": "Town of Apex Template App",
-    "version": "0.8.0",
+    "title": "Hive Project Management Platform",
+    "version": "0.5.0",
     "author": "Town of Apex",
     "year": "2026",
     "status": "Active",
-    "description": "Application using the Town of Apex Design System"
+    "description": "Project Management Platform for the Town of Apex"
 }

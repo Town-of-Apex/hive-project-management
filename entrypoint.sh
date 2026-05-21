@@ -4,7 +4,7 @@
 #!/bin/bash
 set -e
 
-echo "Starting Apex Design System..."
+echo "Starting Hive Project Management Platform..."
 echo "Base Path: ${BASE_PATH:-'/'}"
 
 # Run the FastAPI server using uvicorn

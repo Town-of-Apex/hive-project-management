@@ -1,13 +1,13 @@
 services:
   apex-backend:
-    container_name: apex-backend
+    container_name: hive-backend
     build: .
     restart: unless-stopped
     environment:
-      - BASE_PATH=/demo
+      - BASE_PATH=/hive
       - DATABASE_URL=sqlite:///./data/app.db
     volumes:
-      - apex-demo-data:/app/data
+      - hive-data:/app/data
     networks:
       - apex-internal
     labels:
@@ -20,13 +20,13 @@ services:
       - "8080:8080"
 
   apex-frontend:
-    container_name: apex-frontend
+    container_name: hive-frontend
     build: ./frontend
     restart: unless-stopped
     networks:
       - apex-internal
     environment:
-      - BASE_PATH=/demo
+      - BASE_PATH=/hive
       - CHOKIDAR_USEPOLLING=true
     labels:
       - "traefik.enable=true"

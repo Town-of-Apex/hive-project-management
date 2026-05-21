@@ -1,10 +1,10 @@
 Write-Host ""
-Write-Host "Starting Apex Design System in Dev Mode..."
+Write-Host "Starting Hive Project Management Platform in Dev Mode..."
 Write-Host ""
 
 # Start backend in separate window
 Write-Host ""
-Write-Host "Starting Apex Design System Backend..."
+Write-Host "Starting Hive Project Management Platform Backend..."
 Write-Host ""
 Start-Process powershell -ArgumentList `
     "-NoExit", `
@@ -13,7 +13,7 @@ Start-Process powershell -ArgumentList `
 
 # Start frontend in current window
 Write-Host ""
-Write-Host "Starting Apex Design System Frontend..."
+Write-Host "Starting Hive Project Management Platform Frontend..."
 Write-Host ""
 Set-Location frontend
 npm run dev

@@ -1,5 +1,5 @@
 services:
-  apex-backend:
+  hive-backend:
     volumes:
       - .:/app
     environment:
@@ -7,7 +7,7 @@ services:
       - DEV_MODE=true
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@apex-db:5432/apex_db
 
-  apex-frontend:
+  hive-frontend:
     volumes:
       # Mount the local frontend folder so HMR works on local file saves
       - ./frontend:/app
