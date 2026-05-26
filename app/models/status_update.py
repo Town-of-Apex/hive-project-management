@@ -1,21 +1,26 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+"""
+app/models/status_update.py
+
+SQLAlchemy ORM model for the status_updates table.
+"""
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
-class Thing(Base):
-    __tablename__ = "things"
 
-    department_id = Column(Integer, ForeignKey("departments.id"))
-    owner_user_id = Column(Integer, ForeignKey("users.id"))
+class StatusUpdate(Base):
+    """
+    StatusUpdate model.
+    Tracks status updates for a project (on track, off track, etc.).
+    Inherits id, created_at, and updated_at from Base.
+    """
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    author_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    status = Column(String(50), nullable=False)  # e.g., "on_track", "at_risk", "off_track"
+    summary = Column(Text, nullable=False)
 
-    name = Column(String, nullable=False)
-    description = Column(Text)
-
-    status = Column(String, default="active")
-    priority = Column(String, default="medium")
-
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-
-    owner = relationship("User")
-    tasks = relationship("Task", back_populates="project")
+    # Relationships
+    project = relationship("Project", back_populates="status_updates")
+    author = relationship("User")

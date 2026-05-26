@@ -15,5 +15,7 @@ class Project(Base):
     priority = Column(String, default="medium")
 
     owner = relationship("User")
-    tasks = relationship("Task", back_populates="project")
-    
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="project", cascade="all, delete-orphan")
+    members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
+    status_updates = relationship("StatusUpdate", back_populates="project", cascade="all, delete-orphan")

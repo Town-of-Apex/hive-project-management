@@ -72,3 +72,9 @@ class Task(Base):
         back_populates="child_tasks",
         remote_side="Task.id"
     )
+
+    comments = relationship(
+        "Comment",
+        back_populates="task",
+        cascade="all, delete-orphan"
+    )

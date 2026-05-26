@@ -48,5 +48,5 @@ class Goal(Base):
     source_external_id = Column(String, nullable=True)
 
     # Relationships
-    parent_goal = relationship("Goal", remote_side=[id], backref="child_goals")
+    parent_goal = relationship("Goal", remote_side="Goal.id", backref="child_goals")
     department = relationship("Department", back_populates="goals")

@@ -1,7 +1,7 @@
 """
-app/schemas/department.py
+app/schemas/status_update.py
 
-Pydantic schemas for the Department resource.
+Pydantic schemas for the StatusUpdate resource.
 """
 from datetime import datetime
 from typing import Optional
@@ -9,12 +9,13 @@ from typing import Optional
 from pydantic import BaseModel, field_validator
 
 
-class DepartmentCreate(BaseModel):
-    owner_user_id: Optional[int] = None
-    name: str
-    description: Optional[str] = None
+class StatusUpdateCreate(BaseModel):
+    project_id: int
+    author_user_id: int
+    status: str
+    summary: str
 
-    @field_validator("name")
+    @field_validator("status", "summary")
     @classmethod
     def not_empty(cls, v: str) -> str:
         if not v or not v.strip():
@@ -22,12 +23,11 @@ class DepartmentCreate(BaseModel):
         return v.strip()
 
 
-class DepartmentUpdate(BaseModel):
-    owner_user_id: Optional[int] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+class StatusUpdateUpdate(BaseModel):
+    status: Optional[str] = None
+    summary: Optional[str] = None
 
-    @field_validator("name")
+    @field_validator("status", "summary")
     @classmethod
     def not_empty_optional(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and (not v or not v.strip()):
@@ -35,11 +35,12 @@ class DepartmentUpdate(BaseModel):
         return v.strip() if v is not None else None
 
 
-class DepartmentRead(BaseModel):
+class StatusUpdateRead(BaseModel):
     id: int
-    owner_user_id: Optional[int]
-    name: str
-    description: Optional[str]
+    project_id: int
+    author_user_id: int
+    status: str
+    summary: str
     created_at: datetime
     updated_at: datetime
 

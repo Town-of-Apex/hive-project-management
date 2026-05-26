@@ -1,21 +1,27 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+"""
+app/models/comment.py
+
+SQLAlchemy ORM model for the comments table.
+"""
+from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
-class Thing(Base):
-    __tablename__ = "things"
 
-    department_id = Column(Integer, ForeignKey("departments.id"))
-    owner_user_id = Column(Integer, ForeignKey("users.id"))
+class Comment(Base):
+    """
+    Comment model.
+    Allows users to post comments on tasks or projects.
+    Inherits id, created_at, and updated_at from Base.
+    """
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    author_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    name = Column(String, nullable=False)
-    description = Column(Text)
+    content = Column(Text, nullable=False)
 
-    status = Column(String, default="active")
-    priority = Column(String, default="medium")
-
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-
-    owner = relationship("User")
-    tasks = relationship("Task", back_populates="project")
+    # Relationships
+    task = relationship("Task", back_populates="comments")
+    project = relationship("Project", back_populates="comments")
+    author = relationship("User")

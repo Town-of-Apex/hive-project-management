@@ -1,7 +1,7 @@
 """
-app/schemas/department.py
+app/schemas/project_member.py
 
-Pydantic schemas for the Department resource.
+Pydantic schemas for the ProjectMember resource.
 """
 from datetime import datetime
 from typing import Optional
@@ -9,12 +9,12 @@ from typing import Optional
 from pydantic import BaseModel, field_validator
 
 
-class DepartmentCreate(BaseModel):
-    owner_user_id: Optional[int] = None
-    name: str
-    description: Optional[str] = None
+class ProjectMemberCreate(BaseModel):
+    project_id: int
+    user_id: int
+    role: Optional[str] = "member"
 
-    @field_validator("name")
+    @field_validator("role")
     @classmethod
     def not_empty(cls, v: str) -> str:
         if not v or not v.strip():
@@ -22,12 +22,10 @@ class DepartmentCreate(BaseModel):
         return v.strip()
 
 
-class DepartmentUpdate(BaseModel):
-    owner_user_id: Optional[int] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+class ProjectMemberUpdate(BaseModel):
+    role: Optional[str] = None
 
-    @field_validator("name")
+    @field_validator("role")
     @classmethod
     def not_empty_optional(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and (not v or not v.strip()):
@@ -35,11 +33,11 @@ class DepartmentUpdate(BaseModel):
         return v.strip() if v is not None else None
 
 
-class DepartmentRead(BaseModel):
+class ProjectMemberRead(BaseModel):
     id: int
-    owner_user_id: Optional[int]
-    name: str
-    description: Optional[str]
+    project_id: int
+    user_id: int
+    role: str
     created_at: datetime
     updated_at: datetime
 

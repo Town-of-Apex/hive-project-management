@@ -15,9 +15,19 @@ from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.exceptions import AppException, app_exception_handler, http_exception_handler
+
+# Import Routers
 from app.api.routes import permits as permit_router
 from app.api.routes import users as user_router
 from app.api.routes import db_status as db_status_router
+from app.api.routes import comments as comment_router
+from app.api.routes import departments as department_router
+from app.api.routes import goals as goal_router
+from app.api.routes import project_members as project_member_router
+from app.api.routes import projects as project_router
+from app.api.routes import status_updates as status_update_router
+from app.api.routes import tasks as task_router
+from app.api.routes import teams as team_router
 
 # ---------------------------------------------------------------------------
 # App instance
@@ -46,6 +56,14 @@ def on_startup():
 app.include_router(permit_router.router)
 app.include_router(user_router.router)
 app.include_router(db_status_router.router)
+app.include_router(comment_router.router)
+app.include_router(department_router.router)
+app.include_router(goal_router.router)
+app.include_router(project_member_router.router)
+app.include_router(project_router.router)
+app.include_router(status_update_router.router)
+app.include_router(task_router.router)
+app.include_router(team_router.router)
 
 # ---------------------------------------------------------------------------
 # Utility routes

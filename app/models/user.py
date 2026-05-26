@@ -29,4 +29,4 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     
     team_id = Column(Integer, ForeignKey("teams.id"))
-    team = relationship("Team", back_populates="members")
+    team = relationship("Team", back_populates="members", foreign_keys=[team_id])
