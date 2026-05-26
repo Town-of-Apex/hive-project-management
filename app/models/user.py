@@ -6,8 +6,10 @@ This model is placed here as a template for user management.
 In a multi-app production architecture, this table (or service) might be separated
 into a central identity system (like Keycloak or a shared auth database schema).
 """
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
 from app.core.database import Base
+from sqlalchemy.orm import relationship
+
 
 
 class User(Base):
@@ -25,3 +27,6 @@ class User(Base):
     role = Column(String(50), nullable=False, default="Employee")
     department = Column(String(100), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
+    
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    team = relationship("Team", back_populates="members")

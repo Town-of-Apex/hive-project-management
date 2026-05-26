@@ -1,0 +1,63 @@
+from pydantic import BaseModel, field_validator
+from typing import Optional
+from datetime import datetime
+
+class TaskCreate(BaseModel):
+    project_id: int
+    parent_task_id: Optional[int] = None
+    assignee_user_id: Optional[int] = None
+    created_by_user_id: int
+    
+    title: str
+    description: Optional[str] = None
+    status: str = "todo"
+    priority: str = "medium"
+    start_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    source_type: Optional[str] = None
+    source_external_id: Optional[str] = None
+        
+    
+    @field_validator("title")
+    @classmethod
+    def not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Field cannot be blank")
+        return v.strip()
+
+class TaskUpdate(BaseModel):
+    project_id: Optional[int] = None
+    parent_task_id: Optional[int] = None
+    assignee_user_id: Optional[int] = None
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    start_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class TaskResponse(BaseModel):
+    id: int
+    project_id: int
+    parent_task_id: Optional[int]
+    assignee_user_id: Optional[int]
+    created_by_user_id: int
+    title: str
+    description: Optional[str]
+    status: str
+    priority: str
+    
+    start_date: Optional[datetime]
+    due_date: Optional[datetime]
+    completed_at: Optional[datetime]
+    
+    created_at: datetime
+    updated_at: datetime
+
+
+    class Config:
+        from_attributes = True
