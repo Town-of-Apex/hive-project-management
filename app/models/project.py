@@ -13,7 +13,9 @@ class Project(Base):
 
     status = Column(String, default="active")
     priority = Column(String, default="medium")
+    visibility = Column(String, default="organization", nullable=False)
 
+    department = relationship("Department", back_populates="projects")
     owner = relationship("User")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="project", cascade="all, delete-orphan")

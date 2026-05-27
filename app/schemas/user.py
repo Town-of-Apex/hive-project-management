@@ -20,6 +20,7 @@ class UserCreate(BaseModel):
     email: Optional[EmailStr] = None
     role: Optional[str] = "Employee"
     department: Optional[str] = None
+    team_id: Optional[int] = None
 
     @field_validator("username", "full_name")
     @classmethod
@@ -43,6 +44,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     department: Optional[str] = None
     is_active: Optional[bool] = None
+    team_id: Optional[int] = None
 
     @field_validator("password")
     @classmethod
@@ -64,6 +66,7 @@ class UserRead(BaseModel):
     role: str
     department: Optional[str]
     is_active: bool
+    team_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

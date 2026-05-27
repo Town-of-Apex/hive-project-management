@@ -8,7 +8,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import get_current_user
 from app.core.database import get_db
+from app.models.user import User
 from app.core.responses import ok
 from app.core.exceptions import AppException
 from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
@@ -18,7 +20,11 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 @router.post("", status_code=201)
-def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
+def create_task(
+    payload: TaskCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Create a new task."""
     task = task_service.create(db, obj_in=payload)
     return ok(TaskRead.model_validate(task).model_dump())
@@ -33,6 +39,7 @@ def list_tasks(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Return a filtered, paginated list of tasks."""
     filters = {}

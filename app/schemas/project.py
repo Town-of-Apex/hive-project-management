@@ -16,6 +16,7 @@ class ProjectCreate(BaseModel):
     description: Optional[str] = None
     status: str = "active"
     priority: str = "medium"
+    visibility: str = "organization"
 
     @field_validator("name")
     @classmethod
@@ -49,6 +50,7 @@ class ProjectRead(BaseModel):
     description: Optional[str]
     status: str
     priority: str
+    visibility: str
     created_at: datetime
     updated_at: datetime
 

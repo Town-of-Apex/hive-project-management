@@ -27,4 +27,8 @@ class Team(Base):
         foreign_keys=[owner_user_id]
     )
 
-    members = relationship("User", back_populates="team")
+    members = relationship(
+        "User",
+        back_populates="team",
+        foreign_keys="User.team_id",
+    )

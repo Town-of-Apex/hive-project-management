@@ -5,9 +5,10 @@ services:
     restart: unless-stopped
     environment:
       - BASE_PATH=/hive
-      - DATABASE_URL=sqlite:///./data/app.db
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@apex-db:5432/apex_db
+      - ALLOW_SQLITE_FALLBACK=false
     volumes:
-      - hive-data:/app/data
+      - apex-demo-data:/app/data
     networks:
       - apex-internal
     labels:

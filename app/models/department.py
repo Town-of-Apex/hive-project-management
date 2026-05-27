@@ -31,3 +31,8 @@ class Department(Base):
         "Goal",
         back_populates="department"
     )
+
+    projects = relationship(
+        "Project",
+        back_populates="department"
+    )

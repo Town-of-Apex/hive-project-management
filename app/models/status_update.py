@@ -13,14 +13,14 @@ class StatusUpdate(Base):
     """
     StatusUpdate model.
     Tracks status updates for a project (on track, off track, etc.).
-    Inherits id, created_at, and updated_at from Base.
     """
+    __tablename__ = "status_updates"
+
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     author_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
-    status = Column(String(50), nullable=False)  # e.g., "on_track", "at_risk", "off_track"
+
+    status = Column(String(50), nullable=False)
     summary = Column(Text, nullable=False)
 
-    # Relationships
     project = relationship("Project", back_populates="status_updates")
     author = relationship("User")
