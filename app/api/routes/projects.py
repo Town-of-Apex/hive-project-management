@@ -13,16 +13,26 @@ from app.core.database import get_db
 from app.core.exceptions import AppException
 from app.core.responses import ok
 from app.models.user import User
-from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectRead
+from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectRead, ProjectReadWithPermissions
 from app.schemas.project_visibility_grant import (
     ProjectVisibilityGrantCreate,
     ProjectVisibilityGrantRead,
 )
 from app.services.project_service import project_service
-from app.services.project_visibility import require_project_edit, require_project_view
+from app.services.project_visibility import (
+    can_edit_project,
+    require_project_edit,
+    require_project_view,
+)
 from app.services.project_visibility_grant_service import project_visibility_grant_service
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
+
+
+def _project_with_permissions(db: Session, current_user: User, project) -> dict:
+    base = ProjectRead.model_validate(project).model_dump()
+    base["can_edit"] = can_edit_project(db, current_user, project)
+    return ProjectReadWithPermissions.model_validate(base).model_dump()
 
 
 @router.post("", status_code=201)
@@ -79,7 +89,7 @@ def get_project(
     if not project:
         raise AppException(f"Project {project_id} not found.", status_code=404)
     require_project_view(db, current_user, project)
-    return ok(ProjectRead.model_validate(project).model_dump())
+    return ok(_project_with_permissions(db, current_user, project))
 
 
 @router.put("/{project_id}")
@@ -99,7 +109,7 @@ def update_project(
         db_obj=project,
         obj_in=payload.model_dump(exclude_unset=True, mode="json"),
     )
-    return ok(ProjectRead.model_validate(updated).model_dump())
+    return ok(_project_with_permissions(db, current_user, updated))
 
 
 @router.delete("/{project_id}")

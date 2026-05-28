@@ -110,7 +110,9 @@ export function AppHeader() {
           }}
         >
           {NAV_ITEMS.filter((item) => !item.hidden).map((item) => {
-            const isActive = location.pathname === item.path
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/" && location.pathname.startsWith(`${item.path}/`))
             return (
               <button
                 key={item.id}

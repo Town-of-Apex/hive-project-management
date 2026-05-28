@@ -20,6 +20,11 @@ export interface Project {
   updated_at: string
 }
 
+/** Project payload from GET/PUT /api/projects/:id (includes permissions). */
+export interface ProjectDetail extends Project {
+  can_edit: boolean
+}
+
 export interface ProjectFormData {
   name: string
   description: string

@@ -22,6 +22,11 @@ export const dbService = {
     return get<User[]>("/api/users")
   },
 
+  /** Active users for assignee/member labels (any signed-in user). */
+  async getUserDirectory(): Promise<User[]> {
+    return get<User[]>("/api/users/directory")
+  },
+
   async getDepartments(): Promise<Department[]> {
     return get<Department[]>("/api/departments?limit=500")
   },

@@ -7,15 +7,27 @@ Routes are thin wrapper over user_service.py.
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.core.auth import require_admin
+from app.core.auth import get_current_user, require_admin
 from app.core.database import get_db
 from app.models.user import User
 from app.core.responses import ok
 from app.core.exceptions import AppException
-from app.schemas.user import UserCreate, UserUpdate, user_read_dict
+from app.schemas.user import UserCreate, UserUpdate, user_directory_dict, user_read_dict
 from app.services.user_service import user_service
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+
+@router.get("/directory")
+def list_users_directory(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=500),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """List active users for display (names on projects/tasks). Non-admin accessible."""
+    users = user_service.list_directory(db, skip=skip, limit=limit)
+    return ok([user_directory_dict(u) for u in users])
 
 
 @router.post("", status_code=201)

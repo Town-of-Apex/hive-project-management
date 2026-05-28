@@ -5,6 +5,7 @@
  */
 
 import type { ApiResponse } from "@/types/api"
+import { ApiRequestError } from "@/types/api"
 
 const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "")
 const TOKEN_KEY = "hive_auth_token"
@@ -46,7 +47,11 @@ async function request<T>(
 
   if (!response.ok || !json.success) {
     const errorJson = json as Extract<ApiResponse<T>, { success: false }>
-    throw new Error(errorJson.error?.message ?? `HTTP ${response.status}`)
+    throw new ApiRequestError(
+      errorJson.error?.message ?? `HTTP ${response.status}`,
+      response.status,
+      errorJson.error?.code
+    )
   }
 
   return (json as Extract<ApiResponse<T>, { success: true }>).data

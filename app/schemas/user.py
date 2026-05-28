@@ -38,6 +38,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    profile_image_url: Optional[str] = None
     password: Optional[str] = None
     role: Optional[UserRole] = None
     department_id: Optional[int] = None
@@ -52,10 +53,32 @@ class UserUpdate(BaseModel):
         return v
 
 
+class UserDirectoryRead(BaseModel):
+    """Public user fields for assignee/member display (any authenticated user)."""
+
+    id: int
+    username: str
+    full_name: str
+    profile_image_url: Optional[str] = None
+    department_id: Optional[int] = None
+    department_name: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+def user_directory_dict(user: Any) -> dict:
+    data = UserDirectoryRead.model_validate(user).model_dump()
+    dept = getattr(user, "department", None)
+    if dept is not None:
+        data["department_name"] = dept.name
+    return data
+
+
 class UserRead(BaseModel):
     id: int
     username: str
     full_name: str
+    profile_image_url: Optional[str] = None
     email: Optional[str]
     role: str
     department_id: Optional[int] = None

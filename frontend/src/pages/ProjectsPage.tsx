@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { Search, Plus } from "lucide-react"
 
@@ -34,6 +35,7 @@ import * as taskService from "@/services/taskService"
 import type { Project, ProjectFormData, ProjectStatus } from "@/types/project"
 
 export function ProjectsPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [taskCounts, setTaskCounts] = useState<Record<number, number>>({})
@@ -267,7 +269,19 @@ export function ProjectsPage() {
                   projects.map((project) => (
                     <tr
                       key={project.id}
-                      style={{ borderBottom: "1px solid var(--border-subtle)" }}
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          navigate(`/projects/${project.id}`)
+                        }
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      style={{
+                        borderBottom: "1px solid var(--border-subtle)",
+                        cursor: "pointer",
+                      }}
                     >
                       <td style={{ padding: "var(--space-3) var(--space-6)", fontWeight: 600 }}>
                         {project.name}

@@ -1,12 +1,19 @@
 # Python
 __pycache__/
 *.py[oc]
+*.pyc
 build/
 dist/
 wheels/
 *.egg-info
-.venv
+.venv/
+venv/
 .python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Node dependencies
 node_modules/
