@@ -58,3 +58,9 @@ class ProjectRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ProjectReadWithPermissions(ProjectRead):
+    """Project payload for detail views; includes caller-specific permissions."""
+
+    can_edit: bool

@@ -2,8 +2,8 @@
  * services/projectService.ts
  */
 
-import { get, post } from "@/services/api"
-import type { Project, ProjectFormData, ProjectListParams } from "@/types/project"
+import { get, post, put } from "@/services/api"
+import type { Project, ProjectDetail, ProjectFormData, ProjectListParams } from "@/types/project"
 
 function buildQuery(params: ProjectListParams): string {
   const searchParams = new URLSearchParams()
@@ -18,8 +18,12 @@ export async function getAll(params: ProjectListParams = {}): Promise<Project[]>
   return get<Project[]>(`/api/projects${buildQuery(params)}`)
 }
 
-export async function getById(id: number): Promise<Project> {
-  return get<Project>(`/api/projects/${id}`)
+export async function getById(id: number): Promise<ProjectDetail> {
+  return get<ProjectDetail>(`/api/projects/${id}`)
+}
+
+export async function update(id: number, data: Partial<ProjectFormData>): Promise<ProjectDetail> {
+  return put<ProjectDetail>(`/api/projects/${id}`, data)
 }
 
 export async function create(data: ProjectFormData): Promise<Project> {
