@@ -13,7 +13,7 @@ from app.core.responses import ok
 from app.core.security import verify_password
 from app.models.user import User
 from app.schemas.auth import LoginRequest, MeResponse, TokenResponse
-from app.schemas.user import UserRead
+from app.schemas.user import UserRead, user_read_dict
 from app.services.user_service import user_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -33,4 +33,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)):
-    return ok(MeResponse(user=UserRead.model_validate(current_user)).model_dump())
+    return ok(
+        MeResponse(user=UserRead(**user_read_dict(current_user))).model_dump()
+    )

@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.core.responses import ok
 from app.core.exceptions import AppException
-from app.schemas.user import UserCreate, UserUpdate, UserRead
+from app.schemas.user import UserCreate, UserUpdate, user_read_dict
 from app.services.user_service import user_service
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -27,7 +27,7 @@ def create_user(
     """Create a new user."""
     try:
         user = user_service.create_user(db, payload)
-        return ok(UserRead.model_validate(user).model_dump())
+        return ok(user_read_dict(user))
     except ValueError as e:
         raise AppException(str(e), status_code=400)
 
@@ -41,7 +41,7 @@ def list_users(
 ):
     """List all registered users."""
     users = user_service.list_users(db, skip=skip, limit=limit)
-    return ok([UserRead.model_validate(u).model_dump() for u in users])
+    return ok([user_read_dict(u) for u in users])
 
 
 @router.get("/{user_id}")
@@ -54,7 +54,7 @@ def get_user(
     user = user_service.get(db, user_id)
     if not user:
         raise AppException(f"User {user_id} not found.", status_code=404)
-    return ok(UserRead.model_validate(user).model_dump())
+    return ok(user_read_dict(user))
 
 
 @router.put("/{user_id}")
@@ -72,7 +72,7 @@ def update_user(
 
     if not user:
         raise AppException(f"User {user_id} not found.", status_code=404)
-    return ok(UserRead.model_validate(user).model_dump())
+    return ok(user_read_dict(user))
 
 
 @router.delete("/{user_id}", status_code=200)

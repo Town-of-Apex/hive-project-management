@@ -9,6 +9,7 @@ function buildQuery(params: ProjectListParams): string {
   const searchParams = new URLSearchParams()
   if (params.search) searchParams.set("search", params.search)
   if (params.status) searchParams.set("status", params.status)
+  if (params.department_id != null) searchParams.set("department_id", String(params.department_id))
   const qs = searchParams.toString()
   return qs ? `?${qs}` : ""
 }

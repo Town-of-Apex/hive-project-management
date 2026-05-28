@@ -2,14 +2,12 @@
 app/models/user.py
 
 SQLAlchemy ORM model for the users table.
-This model is placed here as a template for user management.
-In a multi-app production architecture, this table (or service) might be separated
-into a central identity system (like Keycloak or a shared auth database schema).
 """
 from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
-from app.core.database import Base
 from sqlalchemy.orm import relationship
 
+from app.core.database import Base
+from app.models.enums import UserRole
 
 
 class User(Base):
@@ -22,11 +20,11 @@ class User(Base):
     email = Column(String(100), nullable=True)
     full_name = Column(String(100), nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    
-    # Roles: e.g. "Administrator", "Employee", "Citizen"
-    role = Column(String(50), nullable=False, default="Employee")
-    department = Column(String(100), nullable=True)
+
+    role = Column(String(50), nullable=False, default=UserRole.user.value)
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
-    
+
     team_id = Column(Integer, ForeignKey("teams.id"))
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
+    department = relationship("Department", foreign_keys=[department_id])

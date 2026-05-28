@@ -5,7 +5,7 @@
  */
 
 import { get, post, del } from "@/services/api"
-import type { DbStatus, User, UserFormData } from "@/types/db"
+import type { DbStatus, Department, User, UserFormData } from "@/types/db"
 
 export const dbService = {
   /**
@@ -20,6 +20,10 @@ export const dbService = {
    */
   async getUsers(): Promise<User[]> {
     return get<User[]>("/api/users")
+  },
+
+  async getDepartments(): Promise<Department[]> {
+    return get<Department[]>("/api/departments?limit=500")
   },
 
   /**

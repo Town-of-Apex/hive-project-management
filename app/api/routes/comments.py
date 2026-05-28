@@ -20,7 +20,10 @@ router = APIRouter(prefix="/api/comments", tags=["comments"])
 @router.post("", status_code=201)
 def create_comment(payload: CommentCreate, db: Session = Depends(get_db)):
     """Create a new comment."""
-    comment = comment_service.create(db, obj_in=payload)
+    try:
+        comment = comment_service.create(db, obj_in=payload)
+    except ValueError as e:
+        raise AppException(str(e), status_code=400) from e
     return ok(CommentRead.model_validate(comment).model_dump())
 
 
@@ -58,7 +61,10 @@ def update_comment(comment_id: int, payload: CommentUpdate, db: Session = Depend
     comment = comment_service.get(db, comment_id)
     if not comment:
         raise AppException(f"Comment {comment_id} not found.", status_code=404)
-    updated = comment_service.update(db, db_obj=comment, obj_in=payload)
+    try:
+        updated = comment_service.update(db, db_obj=comment, obj_in=payload)
+    except ValueError as e:
+        raise AppException(str(e), status_code=400) from e
     return ok(CommentRead.model_validate(updated).model_dump())
 
 

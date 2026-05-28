@@ -26,7 +26,7 @@ app = FastAPI(
     root_path=settings.BASE_PATH,
     title="Hive Project Management",
     description="Internal project management platform for the Town of Apex.",
-    version="0.5.0",
+    version="0.6.0",
 )
 
 app.add_exception_handler(AppException, app_exception_handler)

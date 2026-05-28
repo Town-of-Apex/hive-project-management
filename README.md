@@ -88,15 +88,17 @@ Use this section as the working backlog when picking up development. Follow the 
 - [x] JWT auth stub (`/api/auth/login`, `/api/auth/me`); projects/tasks require login
 - [x] Basic Projects UI (list, search, status filter, create project, task counts)
 - [x] `run_dev.ps1` orchestration (DB, migrate, seed, backend window, frontend)
+- [x] `User.department_id` FK (replaces free-text `department` string; migration `002`)
+- [x] Comment XOR rule: exactly one of `task_id` or `project_id` (DB check + Pydantic/service validation)
+- [x] `department_id` filter on `GET /api/projects`
+- [x] App roles (`users.role`: `admin`, `user`) and project member roles (`manager`, `member`, `viewer`)
+- [x] Project visibility enforcement (`private` / `department` / `organization`) + whitelist grants API
+- [x] `UserProfilePage` wired to `/api/auth/me` (real user + department name)
 
 ### Immediate polish (do soon)
 
-- [ ] Smoke-test full `.\run_dev.ps1` flow after any script changes
-- [ ] Replace `User.department` string with `department_id` FK (align user model with `departments` table)
-- [ ] Enforce comment rule: exactly one of `task_id` or `project_id` (DB check or service validation)
-- [ ] Add `department_id` filter on project list API (useful once org UI exists)
+- [ ] Smoke-test full `.\run_dev.ps1` flow after migration `002` (existing DBs: run `alembic upgrade head`)
 - [ ] Settings page: wire user admin to auth token (admin-only `/api/users` already protected)
-- [ ] Update `UserProfilePage` to show real user from `/api/auth/me` instead of static placeholder
 
 ### Phase 1 — Authentication (production path)
 
@@ -118,15 +120,16 @@ Use this section as the working backlog when picking up development. Follow the 
 
 | Layer | Where | Examples |
 |-------|--------|----------|
-| App role | `users.role` | `admin`, `user` (constrain to enum or lookup) |
+| App role | `users.role` | `admin`, `user` |
 | Project role | `project_members.role` | `manager`, `member`, `viewer` |
 
 | Task | Notes |
 |------|--------|
-| `app/services/permissions.py` | `can_view_project`, `can_edit_task`, `can_manage_members`, etc. |
-| Enforce on all project/task/member routes | Filter `list` queries in services, not only UI |
-| `projects.visibility` enforcement | `private` / `department` / `organization` (column exists; not enforced yet) |
-| Admin UI for app roles | Assign roles; add/remove project members |
+| [x] `app/services/project_visibility.py` | `can_view_project`, `can_edit_project`, list filtering |
+| [x] Enforce on project routes | Visibility-aware list/get/update/delete |
+| [x] `projects.visibility` + whitelist grants | `GET/POST/DELETE /api/projects/{id}/visibility-grants` |
+| [ ] Enforce visibility on task/member routes | Extend checks to nested resources |
+| [ ] Admin UI for app roles | Assign roles; add/remove project members |
 
 **Definition of done:** User A cannot read or mutate User B’s private project via API.
 

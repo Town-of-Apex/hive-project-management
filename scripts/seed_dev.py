@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 from app.core.database import SessionLocal, _import_all_models
 from app.core.security import hash_password
 from app.models.department import Department
+from app.models.enums import ProjectMemberRole, UserRole
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.task import Task
@@ -44,8 +45,8 @@ def seed() -> None:
             email="devadmin@apexnc.org",
             full_name="Dev Administrator",
             hashed_password=hash_password(DEV_PASSWORD),
-            role="Administrator",
-            department="Information Technology",
+            role=UserRole.admin.value,
+            department_id=dept.id,
             is_active=True,
         )
         jsmith = User(
@@ -53,8 +54,8 @@ def seed() -> None:
             email="jsmith@apexnc.org",
             full_name="Jane Smith",
             hashed_password=hash_password("employee123"),
-            role="Employee",
-            department="Information Technology",
+            role=UserRole.user.value,
+            department_id=dept.id,
             is_active=True,
         )
         db.add_all([admin, jsmith])
@@ -92,15 +93,17 @@ def seed() -> None:
                 "description": "Normalize parcel layers and retire obsolete map services.",
                 "status": "on_hold",
                 "priority": "low",
+                "visibility": "department",
             },
         ]
 
         projects: list[Project] = []
         for pdata in projects_data:
+            visibility = pdata.pop("visibility", "organization")
             project = Project(
                 department_id=dept.id,
                 owner_user_id=admin.id,
-                visibility="organization",
+                visibility=visibility,
                 **pdata,
             )
             db.add(project)
@@ -112,7 +115,7 @@ def seed() -> None:
                 ProjectMember(
                     project_id=project.id,
                     user_id=admin.id,
-                    role="manager",
+                    role=ProjectMemberRole.manager.value,
                 )
             )
 

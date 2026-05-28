@@ -3,12 +3,37 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { Divider } from "@/components/shared/Divider"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
+import { Badge } from "@/components/ui/Badge"
+import { useAuth } from "@/contexts/AuthContext"
+
+function roleBadgeVariant(role: string) {
+  return role === "admin" ? "success" : "default"
+}
+
+function roleLabel(role: string) {
+  if (role === "admin") return "Administrator"
+  if (role === "user") return "User"
+  return role
+}
 
 export function UserProfilePage() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <p style={{ color: "var(--text-muted)" }}>Loading profile…</p>
+      </PageContainer>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
+
   return (
     <PageContainer>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
-        
         <PageHeader
           overline="Account Information"
           title="User Profile"
@@ -22,22 +47,36 @@ export function UserProfilePage() {
             <h3 style={{ fontFamily: "var(--font-ui)", fontWeight: 800, fontSize: "1.125rem", color: "var(--text-main)", margin: 0 }}>
               Profile Details
             </h3>
-            
+
             <Card style={{ padding: "var(--space-6)" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
                 <div>
                   <p style={{ fontWeight: 600, color: "var(--text-main)", margin: 0 }}>Name</p>
-                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>Town Employee</p>
+                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>{user.full_name}</p>
+                </div>
+                <Divider />
+                <div>
+                  <p style={{ fontWeight: 600, color: "var(--text-main)", margin: 0 }}>Username</p>
+                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>{user.username}</p>
                 </div>
                 <Divider />
                 <div>
                   <p style={{ fontWeight: 600, color: "var(--text-main)", margin: 0 }}>Email</p>
-                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>employee@apexnc.org</p>
+                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>{user.email ?? "—"}</p>
+                </div>
+                <Divider />
+                <div>
+                  <p style={{ fontWeight: 600, color: "var(--text-main)", margin: 0 }}>Role</p>
+                  <div style={{ marginTop: "var(--space-2)" }}>
+                    <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
+                  </div>
                 </div>
                 <Divider />
                 <div>
                   <p style={{ fontWeight: 600, color: "var(--text-main)", margin: 0 }}>Department</p>
-                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>Information Technology</p>
+                  <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0" }}>
+                    {user.department_name ?? "—"}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -47,7 +86,7 @@ export function UserProfilePage() {
             <h3 style={{ fontFamily: "var(--font-ui)", fontWeight: 800, fontSize: "1.125rem", color: "var(--text-main)", margin: 0 }}>
               Authentication
             </h3>
-            
+
             <Card style={{ padding: "var(--space-6)" }}>
               <p style={{ color: "var(--text-muted)", marginBottom: "var(--space-4)" }}>
                 Active Directory authentication integration will be configured here.

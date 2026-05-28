@@ -18,7 +18,7 @@ import { toast } from "sonner"
 import { useState, useEffect } from "react"
 import { useTheme, type ColorSystem } from "@/hooks/useTheme"
 import { dbService } from "@/services/dbService"
-import type { DbStatus, User } from "@/types/db"
+import type { DbStatus, Department, User } from "@/types/db"
 
 export function SettingsPage() {
   const { colorSystem, setColorSystem } = useTheme()
@@ -35,6 +35,7 @@ export function SettingsPage() {
   // Database status states
   const [dbStatus, setDbStatus] = useState<DbStatus | null>(null)
   const [users, setUsers] = useState<User[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [loadingDb, setLoadingDb] = useState(true)
   
   // Create user form state
@@ -43,8 +44,8 @@ export function SettingsPage() {
     full_name: "",
     password: "",
     email: "",
-    role: "Employee",
-    department: ""
+    role: "user",
+    department_id: "" as string | number,
   })
   const [submittingUser, setSubmittingUser] = useState(false)
 
@@ -55,8 +56,12 @@ export function SettingsPage() {
       const status = await dbService.getStatus()
       setDbStatus(status)
       if (status.connected) {
-        const userList = await dbService.getUsers()
+        const [userList, deptList] = await Promise.all([
+          dbService.getUsers(),
+          dbService.getDepartments(),
+        ])
         setUsers(userList)
+        setDepartments(deptList)
       }
     } catch (err: any) {
       toast.error("Failed to connect to database status API", { description: err.message })
@@ -88,7 +93,9 @@ export function SettingsPage() {
         password: newUser.password,
         email: newUser.email || undefined,
         role: newUser.role,
-        department: newUser.department || undefined
+        department_id: newUser.department_id
+          ? Number(newUser.department_id)
+          : undefined,
       })
       toast.success("User created", { description: `Successfully created user ${newUser.username}` })
       setNewUser({
@@ -96,8 +103,8 @@ export function SettingsPage() {
         full_name: "",
         password: "",
         email: "",
-        role: "Employee",
-        department: ""
+        role: "user",
+        department_id: "",
       })
       // Refresh user list and DB metadata
       const userList = await dbService.getUsers()
@@ -360,11 +367,11 @@ export function SettingsPage() {
                               <td style={{ padding: "8px", fontWeight: 600 }}>{user.username}</td>
                               <td style={{ padding: "8px" }}>{user.full_name}</td>
                               <td style={{ padding: "8px" }}>
-                                <Badge variant={user.role === "Administrator" ? "success" : "default"}>
-                                  {user.role}
+                                <Badge variant={user.role === "admin" ? "success" : "default"}>
+                                  {user.role === "admin" ? "Administrator" : user.role === "user" ? "User" : user.role}
                                 </Badge>
                               </td>
-                              <td style={{ padding: "8px" }}>{user.department || "—"}</td>
+                              <td style={{ padding: "8px" }}>{user.department_name ?? "—"}</td>
                               <td style={{ padding: "8px" }}>
                                 <Button 
                                   variant="secondary" 
@@ -436,20 +443,24 @@ export function SettingsPage() {
                           value={newUser.role} 
                           onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                         >
-                          <option value="Employee">Employee</option>
-                          <option value="Administrator">Administrator</option>
-                          <option value="Citizen">Citizen</option>
+                          <option value="user">User</option>
+                          <option value="admin">Administrator</option>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="department">Department</Label>
-                        <Input 
-                          id="department" 
-                          type="text" 
-                          value={newUser.department} 
-                          onChange={(e) => setNewUser({...newUser, department: e.target.value})} 
-                          placeholder="e.g. Information Technology" 
-                        />
+                        <Label htmlFor="department_id">Department</Label>
+                        <Select
+                          id="department_id"
+                          value={newUser.department_id}
+                          onChange={(e) => setNewUser({ ...newUser, department_id: e.target.value })}
+                        >
+                          <option value="">— None —</option>
+                          {departments.map((dept) => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </option>
+                          ))}
+                        </Select>
                       </div>
                     </div>
 

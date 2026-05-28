@@ -23,14 +23,25 @@ export interface DbStatus {
   meta_error?: string;
 }
 
+export interface Department {
+  id: number;
+  name: string;
+  description: string | null;
+  owner_user_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
   id: number;
   username: string;
   full_name: string;
   email: string | null;
   role: string;
-  department: string | null;
+  department_id: number | null;
+  department_name?: string | null;
   is_active: boolean;
+  team_id?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,5 +52,5 @@ export interface UserFormData {
   password?: string;
   email?: string;
   role?: string;
-  department?: string;
+  department_id?: number;
 }

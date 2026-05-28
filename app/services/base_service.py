@@ -51,7 +51,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def create(self, db: Session, *, obj_in: CreateSchemaType, extra_data: Optional[dict] = None) -> ModelType:
         """Create and persist a new record."""
-        obj_in_data = obj_in.model_dump()
+        obj_in_data = obj_in.model_dump(mode="json")
         if extra_data:
             obj_in_data.update(extra_data)
             
@@ -72,7 +72,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True, mode="json")
             
         for field, value in update_data.items():
             if hasattr(db_obj, field):

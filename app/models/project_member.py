@@ -7,13 +7,13 @@ from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+from app.models.enums import ProjectMemberRole
 
 
 class ProjectMember(Base):
     """
     ProjectMember model.
     Maps users to projects they are members of, with an assigned role.
-    Inherits id, created_at, and updated_at from Base.
     """
     __tablename__ = "project_members"
     __table_args__ = (
@@ -22,8 +22,7 @@ class ProjectMember(Base):
 
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    role = Column(String(50), nullable=False, default="member")  # e.g., "manager", "contributor", "viewer"
+    role = Column(String(50), nullable=False, default=ProjectMemberRole.member.value)
 
-    # Relationships
     project = relationship("Project", back_populates="members")
     user = relationship("User")

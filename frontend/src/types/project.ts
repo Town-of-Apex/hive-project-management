@@ -27,7 +27,11 @@ export interface ProjectFormData {
   priority: ProjectPriority
 }
 
+export type ProjectVisibility = "private" | "department" | "organization"
+export type ProjectMemberRole = "manager" | "member" | "viewer"
+
 export interface ProjectListParams {
   search?: string
   status?: string
+  department_id?: number
 }

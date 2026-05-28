@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
+from app.models.enums import ProjectVisibility
+
 
 class Project(Base):
     __tablename__ = "projects"
@@ -13,7 +16,11 @@ class Project(Base):
 
     status = Column(String, default="active")
     priority = Column(String, default="medium")
-    visibility = Column(String, default="organization", nullable=False)
+    visibility = Column(
+        String,
+        default=ProjectVisibility.organization.value,
+        nullable=False,
+    )
 
     department = relationship("Department", back_populates="projects")
     owner = relationship("User")
@@ -21,3 +28,8 @@ class Project(Base):
     comments = relationship("Comment", back_populates="project", cascade="all, delete-orphan")
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     status_updates = relationship("StatusUpdate", back_populates="project", cascade="all, delete-orphan")
+    visibility_grants = relationship(
+        "ProjectVisibilityGrant",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )

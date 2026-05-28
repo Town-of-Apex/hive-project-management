@@ -8,6 +8,8 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
+from app.schemas.enums import ProjectVisibility
+
 
 class ProjectCreate(BaseModel):
     department_id: Optional[int] = None
@@ -16,7 +18,7 @@ class ProjectCreate(BaseModel):
     description: Optional[str] = None
     status: str = "active"
     priority: str = "medium"
-    visibility: str = "organization"
+    visibility: ProjectVisibility = ProjectVisibility.organization
 
     @field_validator("name")
     @classmethod
@@ -33,6 +35,7 @@ class ProjectUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
+    visibility: Optional[ProjectVisibility] = None
 
     @field_validator("name")
     @classmethod
