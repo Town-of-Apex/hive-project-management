@@ -2,56 +2,46 @@
  * services/api.ts
  *
  * Base HTTP client for all API calls.
- *
- * WHY THIS EXISTS:
- * Centralizing fetch logic here means every component gets the same error
- * handling, base URL, and headers automatically. You never write raw fetch()
- * calls inside a component.
- *
- * HOW TO USE:
- *   import { get, post, put, del } from "@/services/api"
- *   const permits = await get<Permit[]>("/api/permits")
  */
 
 import type { ApiResponse } from "@/types/api"
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-/**
- * The base URL prefix for all API requests (e.g. "/demo" or "").
- * In development, Vite proxies [base_path]/api → http://apex-backend:8080
- */
 const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "")
+const TOKEN_KEY = "hive_auth_token"
 
-// ---------------------------------------------------------------------------
-// Core fetch wrapper
-// ---------------------------------------------------------------------------
+export function getAuthToken(): string | null {
+  return sessionStorage.getItem(TOKEN_KEY)
+}
 
-/**
- * Internal helper that wraps fetch with standard error handling.
- * Returns the parsed JSON body or throws an Error with a readable message.
- */
+export function setAuthToken(token: string): void {
+  sessionStorage.setItem(TOKEN_KEY, token)
+}
+
+export function clearAuthToken(): void {
+  sessionStorage.removeItem(TOKEN_KEY)
+}
+
 async function request<T>(
   method: string,
   path: string,
   body?: unknown
 ): Promise<T> {
-  const options: RequestInit = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
   }
+
+  const token = getAuthToken()
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const options: RequestInit = { method, headers }
 
   if (body !== undefined) {
     options.body = JSON.stringify(body)
   }
 
   const response = await fetch(`${BASE_PATH}${path}`, options)
-
-  // The server may return a non-OK status with a JSON error body
   const json = (await response.json()) as ApiResponse<T>
 
   if (!response.ok || !json.success) {
@@ -62,26 +52,18 @@ async function request<T>(
   return (json as Extract<ApiResponse<T>, { success: true }>).data
 }
 
-// ---------------------------------------------------------------------------
-// Public methods
-// ---------------------------------------------------------------------------
-
-/** HTTP GET — fetches data from the given path */
 export function get<T>(path: string): Promise<T> {
   return request<T>("GET", path)
 }
 
-/** HTTP POST — creates a new resource */
 export function post<T>(path: string, body: unknown): Promise<T> {
   return request<T>("POST", path, body)
 }
 
-/** HTTP PUT — replaces an existing resource */
 export function put<T>(path: string, body: unknown): Promise<T> {
   return request<T>("PUT", path, body)
 }
 
-/** HTTP DELETE — removes a resource */
 export function del<T>(path: string): Promise<T> {
   return request<T>("DELETE", path)
 }

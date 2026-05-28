@@ -27,11 +27,6 @@ export const NAV_ITEMS: NavItem[] = [
     path:  "/projects",
   },
   {
-    id:    "permits",
-    label: "Permits",
-    path:  "/permits",
-  },
-  {
     id:    "components",
     label: "Components",
     path:  "/components",

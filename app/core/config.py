@@ -11,10 +11,14 @@ class Settings(BaseSettings):
     BASE_PATH: str = ""
     
     # Database
-    # Primary: PostgreSQL. Fallback: SQLite
-    DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/apex_db"
+    # Primary: PostgreSQL. Fallback: SQLite (disabled by default for Hive dev)
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/apex_db"
     FALLBACK_DATABASE_URL: str = "sqlite:///./data/app.db"
-    ALLOW_SQLITE_FALLBACK: bool = True
+    ALLOW_SQLITE_FALLBACK: bool = False
+
+    # Auth stub (JWT)
+    JWT_SECRET: str = "dev-change-me-in-production"
+    JWT_EXPIRE_MINUTES: int = 480
     
     # Server
     PORT: int = 8080

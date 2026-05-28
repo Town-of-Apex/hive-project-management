@@ -7,7 +7,9 @@ Routes are thin wrapper over user_service.py.
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_admin
 from app.core.database import get_db
+from app.models.user import User
 from app.core.responses import ok
 from app.core.exceptions import AppException
 from app.schemas.user import UserCreate, UserUpdate, UserRead
@@ -17,7 +19,11 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 
 @router.post("", status_code=201)
-def create_user(payload: UserCreate, db: Session = Depends(get_db)):
+def create_user(
+    payload: UserCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Create a new user."""
     try:
         user = user_service.create_user(db, payload)
@@ -30,7 +36,8 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
 def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
 ):
     """List all registered users."""
     users = user_service.list_users(db, skip=skip, limit=limit)
@@ -38,7 +45,11 @@ def list_users(
 
 
 @router.get("/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Fetch a single user by ID."""
     user = user_service.get(db, user_id)
     if not user:
@@ -47,7 +58,12 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{user_id}")
-def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: int,
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Update an existing user's details."""
     try:
         user = user_service.update_user(db, user_id, payload)
@@ -60,7 +76,11 @@ def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/{user_id}", status_code=200)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Permanently delete a user from the database."""
     deleted = user_service.delete(db, id=user_id)
     if not deleted:

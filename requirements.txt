@@ -5,6 +5,7 @@ pydantic
 pydantic[email]
 pydantic-settings
 # Approved driver for PostgreSQL connectivity
-psycopg2-binary==2.9.9
+psycopg[binary]
 alembic
+PyJWT
 python-dotenv

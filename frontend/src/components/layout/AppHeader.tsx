@@ -10,7 +10,7 @@
  */
 
 import { useNavigate, useLocation } from "react-router-dom"
-import { Settings, User, Sun, Moon } from "lucide-react"
+import { Settings, User, Sun, Moon, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/DropdownMenu"
+import { useAuth } from "@/contexts/AuthContext"
 import { useAppMetadata } from "@/hooks/useAppMetadata"
 import { useTheme } from "@/hooks/useTheme"
 import { NAV_ITEMS } from "@/lib/navigation"
@@ -28,6 +29,7 @@ export function AppHeader() {
   const location = useLocation()
   const { metadata } = useAppMetadata()
   const { theme, toggleTheme } = useTheme()
+  const { user, logout } = useAuth()
 
   return (
     <header
@@ -169,6 +171,16 @@ export function AppHeader() {
                 <Settings className="w-4 h-4" />
                 App Settings
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  logout()
+                  navigate("/login")
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -177,7 +189,7 @@ export function AppHeader() {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/profile")}
-            aria-label="User profile"
+            aria-label={user ? `Profile (${user.username})` : "User profile"}
             style={{
               width:        "32px",
               height:       "32px",
