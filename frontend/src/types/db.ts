@@ -36,6 +36,7 @@ export interface User {
   id: number;
   username: string;
   full_name: string;
+  profile_image_url?: string | null;
   email: string | null;
   role: string;
   department_id: number | null;

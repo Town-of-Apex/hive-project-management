@@ -2,7 +2,10 @@
  * Read-only project members list.
  */
 
+import type { ReactNode } from "react"
+
 import { Badge } from "@/components/ui/Badge"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 import type { ProjectMember } from "@/types/projectMember"
 import type { User } from "@/types/db"
 
@@ -16,6 +19,47 @@ interface ProjectMembersPanelProps {
   members: ProjectMember[]
   usersById: Record<number, User>
   ownerUserId: number | null
+}
+
+function MemberRow({
+  user,
+  badge,
+  emphasizeName = false,
+}: {
+  user: User
+  badge: ReactNode
+  emphasizeName?: boolean
+}) {
+  return (
+    <li
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "var(--space-3)",
+        padding: "var(--space-2) 0",
+      }}
+    >
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-3)",
+          minWidth: 0,
+        }}
+      >
+        <UserAvatar
+          fullName={user.full_name}
+          profileImageUrl={user.profile_image_url}
+          size={28}
+        />
+        <span style={{ fontWeight: emphasizeName ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis" }}>
+          {user.full_name}
+        </span>
+      </span>
+      {badge}
+    </li>
+  )
 }
 
 export function ProjectMembersPanel({
@@ -51,37 +95,22 @@ export function ProjectMembersPanel({
         }}
       >
         {owner && (
-          <li
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "var(--space-3)",
-              padding: "var(--space-2) 0",
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>{owner.full_name}</span>
-            <Badge variant="info">Owner</Badge>
-          </li>
+          <MemberRow
+            user={owner}
+            emphasizeName
+            badge={<Badge variant="info">Owner</Badge>}
+          />
         )}
         {members.map((member) => {
           const user = usersById[member.user_id]
           if (!user) return null
           if (member.user_id === ownerUserId) return null
           return (
-            <li
+            <MemberRow
               key={member.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "var(--space-3)",
-                padding: "var(--space-2) 0",
-              }}
-            >
-              <span>{user.full_name}</span>
-              <Badge>{roleLabels[member.role] ?? member.role}</Badge>
-            </li>
+              user={user}
+              badge={<Badge>{roleLabels[member.role] ?? member.role}</Badge>}
+            />
           )
         })}
         {members.length === 0 && !owner && (

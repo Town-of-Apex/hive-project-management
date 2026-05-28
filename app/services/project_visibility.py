@@ -69,22 +69,22 @@ def visible_projects_query(db: Session, user: User) -> Query:
             ProjectVisibilityGrant.user_id == user.id,
         )
     )
-    same_department = and_(
-        Project.visibility == ProjectVisibility.department.value,
-        Project.department_id.isnot(None),
-        Project.department_id == user.department_id,
-        user.department_id.isnot(None),
-    )
-
-    return db.query(Project).filter(
-        or_(
-            Project.owner_user_id == user.id,
-            member_exists,
-            grant_exists,
-            Project.visibility == ProjectVisibility.organization.value,
-            same_department,
+    conditions = [
+        Project.owner_user_id == user.id,
+        member_exists,
+        grant_exists,
+        Project.visibility == ProjectVisibility.organization.value,
+    ]
+    if user.department_id is not None:
+        conditions.append(
+            and_(
+                Project.visibility == ProjectVisibility.department.value,
+                Project.department_id.isnot(None),
+                Project.department_id == user.department_id,
+            )
         )
-    )
+
+    return db.query(Project).filter(or_(*conditions))
 
 
 def require_project_view(db: Session, user: User, project: Project) -> None:

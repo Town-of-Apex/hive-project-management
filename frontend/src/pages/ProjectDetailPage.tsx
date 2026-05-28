@@ -11,9 +11,12 @@ import { toast } from "sonner"
 import { PageContainer } from "@/components/layout/PageContainer"
 import { Divider } from "@/components/shared/Divider"
 import { Card } from "@/components/ui/Card"
-import { Button } from "@/components/ui/Button"
 import { ProjectDetailBreadcrumb } from "@/features/project-detail/components/ProjectDetailBreadcrumb"
 import { ProjectDetailHeader } from "@/features/project-detail/components/ProjectDetailHeader"
+import {
+  ProjectDetailErrorView,
+  resolveProjectDetailErrorKind,
+} from "@/features/project-detail/components/ProjectDetailErrorView"
 import { ProjectMembersPanel } from "@/features/project-detail/components/ProjectMembersPanel"
 import { ProjectViewToolbar } from "@/features/project-detail/components/ProjectViewToolbar"
 import { ProjectTaskTableView } from "@/features/project-detail/components/ProjectTaskTableView"
@@ -35,6 +38,7 @@ export function ProjectDetailPage() {
     usersById,
     loading,
     error,
+    errorStatus,
     updateProject,
     addTask,
   } = useProjectDetail(projectId)
@@ -52,10 +56,10 @@ export function ProjectDetailPage() {
   if (projectId == null) {
     return (
       <PageContainer>
-        <p style={{ color: "var(--text-muted)" }}>Invalid project link.</p>
-        <Button variant="secondary" onClick={() => navigate("/projects")}>
-          Back to projects
-        </Button>
+        <ProjectDetailErrorView
+          kind="invalid_id"
+          onBack={() => navigate("/projects")}
+        />
       </PageContainer>
     )
   }
@@ -71,10 +75,11 @@ export function ProjectDetailPage() {
   if (error || !project) {
     return (
       <PageContainer>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? "Project not found."}</p>
-        <Button variant="secondary" onClick={() => navigate("/projects")}>
-          Back to projects
-        </Button>
+        <ProjectDetailErrorView
+          kind={resolveProjectDetailErrorKind(errorStatus, Boolean(error))}
+          message={error}
+          onBack={() => navigate("/projects")}
+        />
       </PageContainer>
     )
   }
@@ -116,7 +121,9 @@ export function ProjectDetailPage() {
           tasks={tasks}
           usersById={usersById}
           canEdit={project.can_edit}
-          onAddTask={(title) => addTask(title)}
+          onAddTask={async (title) => {
+            await addTask(title)
+          }}
         />
       </div>
     </PageContainer>

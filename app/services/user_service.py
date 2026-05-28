@@ -89,6 +89,20 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             .all()
         )
 
+    def list_directory(
+        self, db: Session, *, skip: int = 0, limit: int = 500
+    ) -> List[User]:
+        """Active users for display labels (assignees, members)."""
+        return (
+            db.query(self.model)
+            .options(joinedload(User.department))
+            .filter(self.model.is_active.is_(True))
+            .order_by(self.model.full_name)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
 
 # Singleton service instance
 user_service = UserService(User)

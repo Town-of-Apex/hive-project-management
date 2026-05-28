@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { ApiRequestError } from "@/types/api"
 import * as projectService from "@/services/projectService"
 import * as projectMemberService from "@/services/projectMemberService"
 import * as taskService from "@/services/taskService"
@@ -23,6 +24,7 @@ export interface UseProjectDetailResult {
   usersById: Record<number, User>
   loading: boolean
   error: string | null
+  errorStatus: number | null
   reload: () => Promise<void>
   updateProject: (data: Partial<ProjectFormData>) => Promise<ProjectDetail>
   addTask: (title: string, status?: string) => Promise<Task>
@@ -36,6 +38,7 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
   const [usersById, setUsersById] = useState<Record<number, User>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorStatus, setErrorStatus] = useState<number | null>(null)
 
   const reload = useCallback(async () => {
     if (projectId == null || Number.isNaN(projectId)) {
@@ -46,12 +49,13 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
 
     setLoading(true)
     setError(null)
+    setErrorStatus(null)
     try {
       const [projectData, taskData, memberData, users] = await Promise.all([
         projectService.getById(projectId),
         taskService.getAll({ project_id: projectId }),
         projectMemberService.getAll({ project_id: projectId }),
-        dbService.getUsers(),
+        dbService.getUserDirectory(),
       ])
       setProject(projectData)
       setTasks(taskData)
@@ -60,7 +64,13 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
       for (const u of users) map[u.id] = u
       setUsersById(map)
     } catch (err) {
-      setError(String(err))
+      if (err instanceof ApiRequestError) {
+        setError(err.message)
+        setErrorStatus(err.status)
+      } else {
+        setError(String(err))
+        setErrorStatus(null)
+      }
       setProject(null)
       setTasks([])
       setMembers([])
@@ -108,6 +118,7 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
     usersById,
     loading,
     error,
+    errorStatus,
     reload,
     updateProject,
     addTask,

@@ -2,8 +2,8 @@
  * Default table view: tasks grouped by status with indented subtasks.
  */
 
-import { useMemo, useState } from "react"
-import { Plus } from "lucide-react"
+import { Fragment, useMemo, useState } from "react"
+import { ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Card } from "@/components/ui/Card"
@@ -37,6 +37,16 @@ export function ProjectTaskTableView({
   const groups = useMemo(() => buildTaskStatusGroups(tasks), [tasks])
   const [newTitle, setNewTitle] = useState("")
   const [adding, setAdding] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set())
+
+  const toggleGroup = (status: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(status)) next.delete(status)
+      else next.add(status)
+      return next
+    })
+  }
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,68 +120,104 @@ export function ProjectTaskTableView({
           No tasks yet.{canEdit ? " Add one above to get started." : ""}
         </Card>
       ) : (
-        groups.map((group) => (
-          <div key={group.status} style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "0.8125rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                color: "var(--text-muted)",
-                paddingLeft: "var(--space-2)",
-              }}
-            >
-              {group.label}
-              <span style={{ fontWeight: 500, marginLeft: "var(--space-2)" }}>({group.rows.length})</span>
-            </h3>
-            <Card style={{ padding: 0, overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-canvas)" }}>
-                    <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700, width: "40%" }}>Task</th>
-                    <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Assignee</th>
-                    <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Priority</th>
-                    <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Due</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.rows.map(({ task, depth }) => {
-                    const assignee =
-                      task.assignee_user_id != null ? usersById[task.assignee_user_id] : null
-                    return (
-                      <tr
-                        key={task.id}
-                        style={{ borderBottom: "1px solid var(--border-subtle)" }}
-                      >
-                        <td style={{ padding: cellPadding }}>
-                          <div
+        <Card style={{ padding: 0, overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-canvas)" }}>
+                <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700, width: "40%" }}>Task</th>
+                <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Assignee</th>
+                <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Priority</th>
+                <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map((group) => {
+                const collapsed = collapsedGroups.has(group.status)
+                return (
+                  <Fragment key={group.status}>
+                    <tr
+                      style={{
+                        borderBottom: "1px solid var(--border-subtle)",
+                        background: "var(--bg-canvas)",
+                      }}
+                    >
+                      <td colSpan={4} style={{ padding: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(group.status)}
+                          aria-expanded={!collapsed}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-2)",
+                            width: "100%",
+                            padding: "var(--space-3) var(--space-6)",
+                            border: "none",
+                            background: "transparent",
+                            cursor: "pointer",
+                            font: "inherit",
+                            textAlign: "left",
+                          }}
+                        >
+                          {collapsed ? (
+                            <ChevronRight className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                          )}
+                          <span
                             style={{
-                              paddingLeft: depth > 0 ? `calc(${depth} * var(--space-6))` : 0,
-                              fontWeight: depth === 0 ? 600 : 400,
+                              fontSize: "0.8125rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              color: "var(--text-muted)",
                             }}
                           >
-                            {task.title}
-                          </div>
-                        </td>
-                        <td style={{ padding: cellPadding, color: "var(--text-muted)" }}>
-                          {assignee?.full_name ?? "—"}
-                        </td>
-                        <td style={{ padding: cellPadding }}>
-                          {priorityLabels[task.priority] ?? task.priority}
-                        </td>
-                        <td style={{ padding: cellPadding, color: "var(--text-muted)" }}>
-                          {task.due_date ? new Date(task.due_date).toLocaleDateString() : "—"}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-        ))
+                            {group.label}
+                          </span>
+                          <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "var(--text-muted)" }}>
+                            ({group.rows.length})
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
+                    {!collapsed &&
+                      group.rows.map(({ task, depth }) => {
+                        const assignee =
+                          task.assignee_user_id != null ? usersById[task.assignee_user_id] : null
+                        return (
+                          <tr
+                            key={task.id}
+                            style={{ borderBottom: "1px solid var(--border-subtle)" }}
+                          >
+                            <td style={{ padding: cellPadding }}>
+                              <div
+                                style={{
+                                  paddingLeft: depth > 0 ? `calc(${depth} * var(--space-6))` : 0,
+                                  fontWeight: depth === 0 ? 600 : 400,
+                                }}
+                              >
+                                {task.title}
+                              </div>
+                            </td>
+                            <td style={{ padding: cellPadding, color: "var(--text-muted)" }}>
+                              {assignee?.full_name ?? "—"}
+                            </td>
+                            <td style={{ padding: cellPadding }}>
+                              {priorityLabels[task.priority] ?? task.priority}
+                            </td>
+                            <td style={{ padding: cellPadding, color: "var(--text-muted)" }}>
+                              {task.due_date ? new Date(task.due_date).toLocaleDateString() : "—"}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </Card>
       )}
     </section>
   )

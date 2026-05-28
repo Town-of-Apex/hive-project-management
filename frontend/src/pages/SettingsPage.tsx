@@ -17,11 +17,14 @@ import { Badge } from "@/components/ui/Badge"
 import { toast } from "sonner"
 import { useState, useEffect } from "react"
 import { useTheme, type ColorSystem } from "@/hooks/useTheme"
+import { useAuth } from "@/contexts/AuthContext"
 import { dbService } from "@/services/dbService"
 import type { DbStatus, Department, User } from "@/types/db"
 
 export function SettingsPage() {
   const { colorSystem, setColorSystem } = useTheme()
+  const { user: currentUser } = useAuth()
+  const isAdmin = currentUser?.role === "admin"
 
   const [settings, setSettings] = useState({
     primaryColor: "forest-green",
@@ -56,12 +59,14 @@ export function SettingsPage() {
       const status = await dbService.getStatus()
       setDbStatus(status)
       if (status.connected) {
-        const [userList, deptList] = await Promise.all([
-          dbService.getUsers(),
-          dbService.getDepartments(),
-        ])
-        setUsers(userList)
+        const deptList = await dbService.getDepartments()
         setDepartments(deptList)
+        if (isAdmin) {
+          const userList = await dbService.getUsers()
+          setUsers(userList)
+        } else {
+          setUsers([])
+        }
       }
     } catch (err: any) {
       toast.error("Failed to connect to database status API", { description: err.message })
@@ -71,8 +76,8 @@ export function SettingsPage() {
   }
 
   useEffect(() => {
-    loadDatabaseData()
-  }, [])
+    void loadDatabaseData()
+  }, [isAdmin])
 
   const handleSave = () => {
     toast.success("Settings saved", { description: "Your preferences have been updated." })

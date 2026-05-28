@@ -24,6 +24,18 @@ const priorityLabels: Record<string, string> = {
   high: "High",
 }
 
+const visibilityLabels: Record<string, string> = {
+  organization: "Organization",
+  department: "Department",
+  private: "Private",
+}
+
+const visibilityTooltips: Record<string, string> = {
+  organization: "Visible to everyone in the organization.",
+  department: "Visible to users in the same department as this project.",
+  private: "Visible only to the owner, members, or users with explicit access grants.",
+}
+
 export function ProjectDetailHeader({ project, onSave }: ProjectDetailHeaderProps) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -198,7 +210,13 @@ export function ProjectDetailHeader({ project, onSave }: ProjectDetailHeaderProp
               Priority: <strong style={{ color: "var(--text-main)" }}>{priorityLabels[project.priority] ?? project.priority}</strong>
             </span>
             <span style={{ color: "var(--text-muted)" }}>
-              Visibility: <strong style={{ color: "var(--text-main)" }}>{project.visibility}</strong>
+              Visibility:{" "}
+              <strong
+                style={{ color: "var(--text-main)" }}
+                title={visibilityTooltips[project.visibility] ?? undefined}
+              >
+                {visibilityLabels[project.visibility] ?? project.visibility}
+              </strong>
             </span>
             <span style={{ color: "var(--text-muted)" }}>
               Updated {new Date(project.updated_at).toLocaleDateString()}
