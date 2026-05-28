@@ -8,3 +8,4 @@ pydantic-settings
 psycopg[binary]
 alembic
 PyJWT
+python-dotenv

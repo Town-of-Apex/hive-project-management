@@ -98,6 +98,17 @@ The template app is configured to use **PostgreSQL** as its primary database sys
 
 If the primary PostgreSQL server is down or unreachable, the system will log a warning and automatically configure itself to run using local SQLite storage, making the warning visible in the frontend Settings page.
 
+Each application should have its own database in the Postgres container. You should create that database manually to start, and then configure the connections, schemas, and migration strategies in your application. DO NOT attempt to automatically create a databaseinyour application, as your application will be started and restarted many times and may result in duplication of databases. 
+* Access pgAdmin at ip_address:5050
+* CREATE DATABASE db_name;
+* CREATE ROLE app_user_name WITH PASSWORD 'password';
+* GRANT ALL PRIVILEGES ON DATABASE db_name TO app_user_name;
+
+For this demo/template application, the database has already been created
+* database: demo
+* user: demo
+* password: password
+
 ---
 
 ## To-Dos
