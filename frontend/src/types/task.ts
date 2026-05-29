@@ -38,6 +38,31 @@ export interface TaskCreateData {
   priority?: string
   parent_task_id?: number | null
   assignee_user_id?: number | null
-  created_by_user_id: number
+  created_by_user_id?: number
   description?: string | null
+  due_date?: string | null
+}
+
+export interface TaskUpdateData {
+  title?: string
+  description?: string | null
+  status?: string
+  priority?: string
+  parent_task_id?: number | null
+  assignee_user_id?: number | null
+  due_date?: string | null
+}
+
+export interface TaskFormValues {
+  title: string
+  description: string
+  status: string
+  priority: string
+  assignee_user_id: number | null
+  due_date: string
+}
+
+export interface NewTaskOptions {
+  parentTaskId?: number | null
+  defaultStatus?: string
 }

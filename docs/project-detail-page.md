@@ -25,7 +25,8 @@ Long term, this page supports:
 | Project meta | Read + **Edit / Save / Cancel** when `can_edit` |
 | Members | Read-only list (owner + `project_members`) |
 | Views | Table only; toolbar shows disabled placeholders for Board, Calendar, Timeline |
-| Tasks | Grouped-by-status table, indented subtasks, **Add task** when `can_edit` |
+| Tasks | Grouped-by-status table, indented subtasks, **New task** dialog when `can_edit` |
+| Task detail | Side panel synced to `?task=<id>`; full edit for editors, read-only for viewers |
 | Permissions | `can_edit` from `GET /api/projects/:id` |
 
 ---
@@ -66,7 +67,7 @@ Long term, this page supports:
 | **Side panel** | Asana-like; room for fields + activity | Narrow on mobile |
 | **Dedicated route** `/projects/:id/tasks/:taskId` | Shareable URLs; full page | Leaves “workspace” feel |
 
-**Decision needed:** Default pattern for task drill-in (modal vs panel vs route). v1 table rows are not clickable yet.
+**Decision (Phase B):** **Side panel** (`TaskDetailPanel`) synced to URL query `?task=<id>`. New-task creation uses a view-agnostic **Dialog** (`TaskFormDialog`). Table rows are clickable.
 
 ---
 
@@ -89,8 +90,9 @@ Long term, this page supports:
 
 - Group tasks by **status** (global default order: todo → in_progress → done; unknown statuses in extra groups).
 - Within group: parent tasks then **indented subtasks** (one level of hierarchy displayed; deeper trees still render recursively).
-- Columns: Task, Assignee, Priority, Due.
-- Add task: single title field → creates task with status `todo`.
+- Columns: Task, Assignee, Priority, Due, Actions (when `can_edit`).
+- Create task: **New task** button + footer action → `TaskFormDialog` (title, description, status, priority, assignee, due).
+- Row click → `TaskDetailPanel`; URL updates to `?task=<id>`.
 
 **Planned:**
 
@@ -162,14 +164,14 @@ Actions are grouped by actor permission (`can_edit` / role / admin). Implement g
 | Action | v1 | Notes |
 |--------|-----|------|
 | List tasks for project | ✅ | |
-| Create task | ✅ | Title only; status `todo` |
-| View task detail | — | Modal/panel/route TBD |
-| Edit task fields inline | — | |
-| Delete task | — | |
-| Create subtask | — | Set `parent_task_id` |
+| Create task | ✅ | `TaskFormDialog`; defaults status `todo` |
+| View task detail | ✅ | Side panel + `?task=` URL |
+| Edit task fields inline | — | Edit in side panel (table inline deferred) |
+| Delete task | ✅ | Confirm dialog; row menu + panel |
+| Create subtask | ✅ | Dialog with `parent_task_id`; row menu + panel |
 | Reorder tasks | — | Needs `sort_order` or rank column |
-| Assign / reassign | — | |
-| Set dates | — | |
+| Assign / reassign | ✅ | Create dialog + detail panel |
+| Set dates | ✅ | Due date in create dialog + detail panel |
 | Comment on task | — | `comments` API exists |
 | Attach files | — | Not in schema |
 
@@ -204,8 +206,8 @@ Actions are grouped by actor permission (`can_edit` / role / admin). Implement g
 
 | Gap | Risk | Recommendation |
 |-----|------|----------------|
-| Task routes lack project visibility checks | IDOR: tasks readable/writable without project access | Enforce `require_project_view` / edit on task CRUD |
-| `project_members` routes lack auth | Anyone can add/remove members | JWT + `require_project_edit` |
+| Task routes lack project visibility checks | ~~IDOR~~ | ✅ Addressed in Phase B (`task_service` + route auth) |
+| `project_members` routes lack auth | ~~Anyone can add/remove members~~ | ✅ Addressed in Phase B (`project_member_service`) |
 | Task edit permission vs project edit | Viewers might edit tasks if task API stays open | Define `can_edit_tasks` (may differ from project metadata) |
 | No `can_edit` on list endpoint | List page cannot dim actions per row | Optional `can_edit` on `ProjectRead` for list |
 
@@ -226,7 +228,8 @@ Actions are grouped by actor permission (`can_edit` / role / admin). Implement g
 | Project + `can_edit` | `GET /api/projects/:id` |
 | Update project | `PUT /api/projects/:id` |
 | Tasks | `GET /api/tasks?project_id=` |
-| Create task | `POST /api/tasks` (requires `created_by_user_id`) |
+| Create task | `POST /api/tasks` (`created_by_user_id` optional; defaults from JWT) |
+| Update / delete task | `PUT/DELETE /api/tasks/:id` |
 | Members | `GET /api/project_members?project_id=` |
 | User names | `GET /api/users` |
 
@@ -272,7 +275,8 @@ frontend/src/
   pages/ProjectDetailPage.tsx          # Route entry; composes feature
   features/project-detail/
     constants/taskStatuses.ts          # Global statuses (swap for per-project later)
-    hooks/useProjectDetail.ts          # Data loading + mutations
+    hooks/useProjectDetail.ts          # Data loading + task mutations
+    hooks/useProjectWorkspace.ts       # URL-synced panel + new-task dialog
     utils/taskTableRows.ts             # Grouping / tree ordering
     components/
       ProjectDetailBreadcrumb.tsx
@@ -280,6 +284,10 @@ frontend/src/
       ProjectMembersPanel.tsx
       ProjectViewToolbar.tsx           # View switcher (extensible)
       ProjectTaskTableView.tsx
+      TaskDetailPanel.tsx              # Side panel (?task=)
+      TaskFormDialog.tsx               # View-agnostic create/subtask
+      TaskAssigneeSelect.tsx
+      TaskDeleteConfirmDialog.tsx
 ```
 
 ### 7.2 Extension guidelines
@@ -302,18 +310,18 @@ frontend/src/
 
 | # | Topic | Question | Options / notes |
 |---|--------|----------|------------------|
-| 1 | Task detail UX | Modal, side panel, or route? | See §2.3 |
+| 1 | Task detail UX | Modal, side panel, or route? | **Side panel + `?task=`** (Phase B) |
 | 2 | View in URL | Same URL vs `?view=` vs `/projects/:id/:view` | v1: same URL; query param lowest friction for switcher |
 | 3 | Task vs project edit rights | Can a `viewer` comment or edit assigned tasks only? | Common pattern: viewer = read-only everything |
 | 4 | Add task default status | Always `todo` vs remember last vs per-group add | v1: `todo` |
-| 5 | Subtask creation | Inline under parent vs only from task detail | |
+| 5 | Subtask creation | Inline under parent vs only from task detail | Dialog from row menu + detail panel |
 | 6 | Departments | Show department name on project header? | `department_id` on project |
 | 7 | Notifications | In-app/email on assign, mention, due? | Out of scope until events exist |
 | 8 | Realtime | WebSocket for board moves vs poll | |
 | 9 | Personal “My tasks” | Cross-project list vs project-only | |
 | 10 | Archived projects | Read-only workspace or hidden tasks? | |
 | 11 | Mobile | Collapse members to accordion? Simplified table? | |
-| 12 | `created_by_user_id` on task create | Should API default from JWT? | v1: frontend sends; backend default safer |
+| 12 | `created_by_user_id` on task create | Should API default from JWT? | ✅ Backend defaults from JWT when omitted |
 
 ---
 
@@ -330,12 +338,12 @@ frontend/src/
 
 ### Phase B — Task workflow
 
-- [ ] Task row click → detail (modal or panel)
-- [ ] Inline edit title, status, assignee, due
-- [ ] Create subtask from row
-- [ ] Delete task with confirm
-- [ ] Secure task APIs with project permissions
-- [ ] `can_edit_tasks` if different from project edit
+- [x] Task row click → detail side panel + `?task=` URL
+- [ ] Inline edit title, status, assignee, due (in table rows)
+- [x] Create subtask from row menu + detail panel
+- [x] Delete task with confirm
+- [x] Secure task APIs with project permissions
+- [ ] `can_edit_tasks` if different from project edit (uses `can_edit` for now)
 
 ### Phase C — Table power features
 
@@ -377,11 +385,13 @@ frontend/src/
 | Layer | Path |
 |-------|------|
 | Page | `frontend/src/pages/ProjectDetailPage.tsx` |
-| Feature | `frontend/src/features/project-detail/` |
+| Feature module | `frontend/src/features/project-detail/` |
 | API routes | `app/api/routes/projects.py`, `tasks.py`, `project_members.py` |
 | Visibility | `app/services/project_visibility.py` |
-| Schema | `app/schemas/project.py` (`ProjectReadWithPermissions`) |
+| UI | `frontend/src/components/ui/Sheet.tsx` |
+| Tests | `tests/test_tasks_permissions.py`, `tests/test_project_members_permissions.py` |
+| Template notes | `docs/template_app_recommended_additions.md` |
 
 ---
 
-*Last updated: initial skeleton + requirements pass aligned with product decisions (May 2026).*
+*Last updated: Phase B task workflow (side panel, dialog create, secured APIs) — May 2026.*
