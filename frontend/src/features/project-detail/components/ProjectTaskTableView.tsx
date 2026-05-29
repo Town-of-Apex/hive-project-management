@@ -3,12 +3,19 @@
  */
 
 import { Fragment, useMemo, useState } from "react"
-import { ChevronDown, ChevronRight, Plus } from "lucide-react"
+import { ChevronDown, ChevronRight, MoreHorizontal, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu"
+import { TaskDeleteConfirmDialog } from "@/features/project-detail/components/TaskDeleteConfirmDialog"
 import { buildTaskStatusGroups } from "@/features/project-detail/utils/taskTableRows"
 import type { Task } from "@/types/task"
 import type { User } from "@/types/db"
@@ -16,8 +23,12 @@ import type { User } from "@/types/db"
 interface ProjectTaskTableViewProps {
   tasks: Task[]
   usersById: Record<number, User>
+  selectedTaskId?: number | null
   canEdit: boolean
-  onAddTask: (title: string) => Promise<void>
+  onOpenTask: (taskId: number) => void
+  onNewTask: () => void
+  onAddSubtask: (parentTaskId: number) => void
+  onDeleteTask: (taskId: number) => Promise<void>
 }
 
 const priorityLabels: Record<string, string> = {
@@ -31,13 +42,17 @@ const cellPadding = "var(--space-4) var(--space-6)"
 export function ProjectTaskTableView({
   tasks,
   usersById,
+  selectedTaskId = null,
   canEdit,
-  onAddTask,
+  onOpenTask,
+  onNewTask,
+  onAddSubtask,
+  onDeleteTask,
 }: ProjectTaskTableViewProps) {
   const groups = useMemo(() => buildTaskStatusGroups(tasks), [tasks])
-  const [newTitle, setNewTitle] = useState("")
-  const [adding, setAdding] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set())
+  const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const toggleGroup = (status: string) => {
     setCollapsedGroups((prev) => {
@@ -48,19 +63,17 @@ export function ProjectTaskTableView({
     })
   }
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const title = newTitle.trim()
-    if (!title) return
-    setAdding(true)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await onAddTask(title)
-      setNewTitle("")
-      toast.success("Task added")
+      await onDeleteTask(deleteTarget.id)
+      toast.success("Task deleted")
+      setDeleteTarget(null)
     } catch (err) {
-      toast.error("Failed to add task", { description: String(err) })
+      toast.error("Failed to delete task", { description: String(err) })
     } finally {
-      setAdding(false)
+      setDeleting(false)
     }
   }
 
@@ -75,49 +88,41 @@ export function ProjectTaskTableView({
           gap: "var(--space-4)",
         }}
       >
-        <h2
-          id="project-tasks-heading"
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-display)",
-            fontSize: "1.25rem",
-            fontWeight: 700,
-          }}
-        >
-          Tasks
-        </h2>
-        <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-          {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
-        </span>
-      </div>
-
-      {canEdit && (
-        <form
-          onSubmit={(e) => void handleAdd(e)}
-          style={{
-            display: "flex",
-            gap: "var(--space-3)",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Input
-            placeholder="Add a task…"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            disabled={adding}
-            style={{ flex: 1, minWidth: "200px" }}
-          />
-          <Button type="submit" variant="primary" disabled={adding || !newTitle.trim()}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", flexWrap: "wrap" }}>
+          <h2
+            id="project-tasks-heading"
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-display)",
+              fontSize: "1.25rem",
+              fontWeight: 700,
+            }}
+          >
+            Tasks
+          </h2>
+          <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+          </span>
+        </div>
+        {canEdit ? (
+          <Button variant="primary" type="button" onClick={onNewTask}>
             <Plus className="w-4 h-4" />
-            Add task
+            New task
           </Button>
-        </form>
-      )}
+        ) : null}
+      </div>
 
       {groups.length === 0 ? (
         <Card style={{ padding: "var(--space-10)", textAlign: "center", color: "var(--text-muted)" }}>
-          No tasks yet.{canEdit ? " Add one above to get started." : ""}
+          No tasks yet.{canEdit ? " Create one to get started." : ""}
+          {canEdit ? (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <Button variant="primary" type="button" onClick={onNewTask}>
+                <Plus className="w-4 h-4" />
+                Add task
+              </Button>
+            </div>
+          ) : null}
         </Card>
       ) : (
         <Card style={{ padding: 0, overflowX: "auto" }}>
@@ -128,6 +133,12 @@ export function ProjectTaskTableView({
                 <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Assignee</th>
                 <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Priority</th>
                 <th style={{ padding: cellPadding, textAlign: "left", fontWeight: 700 }}>Due</th>
+                {canEdit ? (
+                  <th
+                    style={{ padding: cellPadding, textAlign: "right", fontWeight: 700, width: "48px" }}
+                    aria-label="Actions"
+                  />
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -141,7 +152,7 @@ export function ProjectTaskTableView({
                         background: "var(--bg-canvas)",
                       }}
                     >
-                      <td colSpan={4} style={{ padding: 0 }}>
+                      <td colSpan={canEdit ? 5 : 4} style={{ padding: 0 }}>
                         <button
                           type="button"
                           onClick={() => toggleGroup(group.status)}
@@ -185,10 +196,24 @@ export function ProjectTaskTableView({
                       group.rows.map(({ task, depth }) => {
                         const assignee =
                           task.assignee_user_id != null ? usersById[task.assignee_user_id] : null
+                        const isSelected = selectedTaskId === task.id
                         return (
                           <tr
                             key={task.id}
-                            style={{ borderBottom: "1px solid var(--border-subtle)" }}
+                            style={{
+                              borderBottom: "1px solid var(--border-subtle)",
+                              cursor: "pointer",
+                              background: isSelected ? "var(--brand-primary-soft)" : undefined,
+                            }}
+                            onClick={() => onOpenTask(task.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                onOpenTask(task.id)
+                              }
+                            }}
+                            tabIndex={0}
+                            aria-label={`Open task ${task.title}`}
                           >
                             <td style={{ padding: cellPadding }}>
                               <div
@@ -209,6 +234,38 @@ export function ProjectTaskTableView({
                             <td style={{ padding: cellPadding, color: "var(--text-muted)" }}>
                               {task.due_date ? new Date(task.due_date).toLocaleDateString() : "—"}
                             </td>
+                            {canEdit ? (
+                              <td style={{ padding: cellPadding, textAlign: "right" }}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      type="button"
+                                      aria-label={`Actions for ${task.title}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onSelect={() => onOpenTask(task.id)}>
+                                      Open
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onAddSubtask(task.id)}>
+                                      Add subtask
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-[var(--danger)]"
+                                      onSelect={() => setDeleteTarget(task)}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            ) : null}
                           </tr>
                         )
                       })}
@@ -217,8 +274,32 @@ export function ProjectTaskTableView({
               })}
             </tbody>
           </table>
+          {canEdit ? (
+            <div
+              style={{
+                borderTop: "1px solid var(--border-subtle)",
+                padding: "var(--space-4) var(--space-6)",
+                background: "var(--bg-canvas)",
+              }}
+            >
+              <Button variant="ghost" type="button" onClick={onNewTask}>
+                <Plus className="w-4 h-4" />
+                Add task
+              </Button>
+            </div>
+          ) : null}
         </Card>
       )}
+
+      <TaskDeleteConfirmDialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        taskTitle={deleteTarget?.title ?? "this task"}
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </section>
   )
 }

@@ -13,7 +13,7 @@ class TaskCreate(BaseModel):
     project_id: int
     parent_task_id: Optional[int] = None
     assignee_user_id: Optional[int] = None
-    created_by_user_id: int
+    created_by_user_id: Optional[int] = None
     title: str
     description: Optional[str] = None
     status: str = "todo"

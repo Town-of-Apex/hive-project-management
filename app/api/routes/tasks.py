@@ -12,7 +12,6 @@ from app.core.auth import get_current_user
 from app.core.database import get_db
 from app.models.user import User
 from app.core.responses import ok
-from app.core.exceptions import AppException
 from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
 from app.services.task_service import task_service
 
@@ -26,7 +25,7 @@ def create_task(
     current_user: User = Depends(get_current_user),
 ):
     """Create a new task."""
-    task = task_service.create(db, obj_in=payload)
+    task = task_service.create_for_user(db, user=current_user, obj_in=payload)
     return ok(TaskRead.model_validate(task).model_dump())
 
 
@@ -41,7 +40,7 @@ def list_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return a filtered, paginated list of tasks."""
+    """Return a filtered, paginated list of tasks visible to the current user."""
     filters = {}
     if project_id is not None:
         filters["project_id"] = project_id
@@ -49,41 +48,55 @@ def list_tasks(
         filters["assignee_user_id"] = assignee_user_id
     if status is not None:
         filters["status"] = status
-        
-    tasks = task_service.list(
-        db, 
-        skip=skip, 
-        limit=limit, 
+
+    tasks = task_service.list_for_user(
+        db,
+        current_user,
+        skip=skip,
+        limit=limit,
         filters=filters,
         search_query=search,
-        search_fields=["title", "description"]
+        search_fields=["title", "description"],
     )
     return ok([TaskRead.model_validate(t).model_dump() for t in tasks])
 
 
 @router.get("/{task_id}")
-def get_task(task_id: int, db: Session = Depends(get_db)):
+def get_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Fetch a single task by ID."""
-    task = task_service.get(db, task_id)
-    if not task:
-        raise AppException(f"Task {task_id} not found.", status_code=404)
+    task = task_service.get_task_for_user(db, task_id=task_id, user=current_user)
     return ok(TaskRead.model_validate(task).model_dump())
 
 
 @router.put("/{task_id}")
-def update_task(task_id: int, payload: TaskUpdate, db: Session = Depends(get_db)):
+def update_task(
+    task_id: int,
+    payload: TaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Update one or more fields on an existing task."""
-    task = task_service.get(db, task_id)
-    if not task:
-        raise AppException(f"Task {task_id} not found.", status_code=404)
-    updated = task_service.update(db, db_obj=task, obj_in=payload)
+    task = task_service.get_task_for_user(
+        db, task_id=task_id, user=current_user, require_edit=True
+    )
+    updated = task_service.update_for_user(db, user=current_user, db_obj=task, obj_in=payload)
     return ok(TaskRead.model_validate(updated).model_dump())
 
 
 @router.delete("/{task_id}")
-def delete_task(task_id: int, db: Session = Depends(get_db)):
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Permanently delete a task."""
-    deleted = task_service.delete(db, id=task_id)
+    deleted = task_service.delete_for_user(db, user=current_user, task_id=task_id)
     if not deleted:
+        from app.core.exceptions import AppException
+
         raise AppException(f"Task {task_id} not found.", status_code=404)
     return ok({"deleted": True, "id": task_id})

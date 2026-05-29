@@ -14,7 +14,7 @@ import * as taskService from "@/services/taskService"
 import { dbService } from "@/services/dbService"
 import type { ProjectDetail, ProjectFormData } from "@/types/project"
 import type { ProjectMember } from "@/types/projectMember"
-import type { Task } from "@/types/task"
+import type { Task, TaskCreateData, TaskUpdateData } from "@/types/task"
 import type { User } from "@/types/db"
 
 export interface UseProjectDetailResult {
@@ -27,7 +27,9 @@ export interface UseProjectDetailResult {
   errorStatus: number | null
   reload: () => Promise<void>
   updateProject: (data: Partial<ProjectFormData>) => Promise<ProjectDetail>
-  addTask: (title: string, status?: string) => Promise<Task>
+  createTask: (data: Omit<TaskCreateData, "project_id">) => Promise<Task>
+  updateTask: (taskId: number, data: TaskUpdateData) => Promise<Task>
+  deleteTask: (taskId: number) => Promise<void>
 }
 
 export function useProjectDetail(projectId: number | null): UseProjectDetailResult {
@@ -93,22 +95,51 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
     [projectId]
   )
 
-  const addTask = useCallback(
-    async (title: string, status = "todo") => {
+  const createTask = useCallback(
+    async (data: Omit<TaskCreateData, "project_id">) => {
       if (projectId == null) throw new Error("Invalid project.")
       if (!project?.can_edit) throw new Error("You do not have permission to add tasks.")
-      if (!user) throw new Error("You must be signed in to add tasks.")
       const created = await taskService.create({
         project_id: projectId,
-        title,
-        status,
-        priority: "medium",
-        created_by_user_id: user.id,
+        ...data,
+        created_by_user_id: data.created_by_user_id ?? user?.id,
       })
       setTasks((prev) => [...prev, created])
       return created
     },
     [projectId, project, user]
+  )
+
+  const updateTask = useCallback(
+    async (taskId: number, data: TaskUpdateData) => {
+      if (!project?.can_edit) throw new Error("You do not have permission to edit tasks.")
+      const updated = await taskService.update(taskId, data)
+      setTasks((prev) => prev.map((task) => (task.id === taskId ? updated : task)))
+      return updated
+    },
+    [project]
+  )
+
+  const deleteTask = useCallback(
+    async (taskId: number) => {
+      if (!project?.can_edit) throw new Error("You do not have permission to delete tasks.")
+      await taskService.remove(taskId)
+      setTasks((prev) => {
+        const removeIds = new Set<number>([taskId])
+        let changed = true
+        while (changed) {
+          changed = false
+          for (const task of prev) {
+            if (task.parent_task_id != null && removeIds.has(task.parent_task_id) && !removeIds.has(task.id)) {
+              removeIds.add(task.id)
+              changed = true
+            }
+          }
+        }
+        return prev.filter((task) => !removeIds.has(task.id))
+      })
+    },
+    [project]
   )
 
   return {
@@ -121,6 +152,8 @@ export function useProjectDetail(projectId: number | null): UseProjectDetailResu
     errorStatus,
     reload,
     updateProject,
-    addTask,
+    createTask,
+    updateTask,
+    deleteTask,
   }
 }

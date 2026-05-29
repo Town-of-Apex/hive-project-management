@@ -13,31 +13,55 @@ Version 0.5.0 — internal project management for the Town of Apex.
 ### One-time setup
 
 ```powershell
+# Windows
 docker network create apex-internal
+copy .env.example .env
 ```
 
-Copy environment template and adjust if needed:
-
-```powershell
-copy .env.example .env
+```bash
+# macOS / Linux
+docker network create apex-internal 2>/dev/null || true
+cp .env.example .env
 ```
 
 ### Start dev stack
 
-From the repository root:
+**Windows (PowerShell):**
 
 ```powershell
 .\run_dev.ps1
 ```
 
-This script:
+**macOS / Linux:**
 
-1. Creates/uses `.venv` and installs Python dependencies
-2. Starts the `apex-db` PostgreSQL container (`localhost:5432`)
-3. Runs `alembic upgrade head`
-4. Seeds dev data (`devadmin` / `devadmin123`) unless you pass `-SkipSeed`
-5. Launches the FastAPI backend on port **8080** (new window)
-6. Launches the Vite frontend on port **5173** (current window)
+```bash
+chmod +x run_dev.sh   # first time only
+./run_dev.sh
+```
+
+Pass `--skip-seed` to skip seeding if data already exists.
+
+These scripts:
+
+1. Create/use `.venv` and install Python dependencies
+2. Start the `apex-db` PostgreSQL container (`localhost:5432`)
+3. Run `alembic upgrade head`
+4. Seed dev data (`devadmin` / `devadmin123`) unless skipped
+5. Launch the FastAPI backend on port **8080**
+6. Launch the Vite frontend on port **5173**
+
+**Manual startup** (if you prefer separate terminals):
+
+```bash
+# Terminal 1 — from repo root
+docker compose up -d apex-db
+uv run alembic upgrade head
+uv run python scripts/seed_dev.py
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+
+# Terminal 2 — frontend
+cd frontend && npm install && npm run dev
+```
 
 Open [http://localhost:5173](http://localhost:5173), sign in, and go to **Projects**.
 
@@ -51,8 +75,23 @@ Open [http://localhost:5173](http://localhost:5173), sign in, and go to **Projec
 Schema changes are managed with **Alembic** (not `create_all` on startup).
 
 ```powershell
+# Windows
 .\.venv\Scripts\python -m alembic upgrade head
 .\.venv\Scripts\python scripts/seed_dev.py
+```
+
+```bash
+# macOS / Linux
+uv run alembic upgrade head
+uv run python scripts/seed_dev.py
+```
+
+### Tests
+
+Requires PostgreSQL running (`docker compose up -d apex-db`) and migrations applied:
+
+```bash
+uv run pytest tests/test_tasks_permissions.py tests/test_project_members_permissions.py -v
 ```
 
 ### Auth stub
@@ -128,7 +167,8 @@ Use this section as the working backlog when picking up development. Follow the 
 | [x] `app/services/project_visibility.py` | `can_view_project`, `can_edit_project`, list filtering |
 | [x] Enforce on project routes | Visibility-aware list/get/update/delete |
 | [x] `projects.visibility` + whitelist grants | `GET/POST/DELETE /api/projects/{id}/visibility-grants` |
-| [ ] Enforce visibility on task/member routes | Extend checks to nested resources |
+| [x] Enforce visibility on task routes | Task CRUD secured in Phase B |
+| [x] Enforce visibility on member routes | Project member list/get/mutate requires auth + project access |
 | [ ] Admin UI for app roles | Assign roles; add/remove project members |
 
 **Definition of done:** User A cannot read or mutate User B’s private project via API.
@@ -154,7 +194,7 @@ Build one feature end-to-end at a time (types → service → page). Copy the **
 | Sprint | Frontend | Backend |
 |--------|----------|---------|
 | 4a | Project detail page | Single project + related data endpoint or parallel fetches |
-| 4b | Tasks tab (list, create, assignee) | Task CRUD already exists; wire UI |
+| 4b | Tasks tab (list, create, assignee, detail panel) | Task CRUD + Phase B workspace UI |
 | 4c | Members tab | Project member CRUD + role checks |
 | 4d | Comments + status updates | Thread or flat comments; latest status on project header |
 | 4e | Departments / teams browser | List depts, teams, link users |

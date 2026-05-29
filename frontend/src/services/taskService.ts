@@ -2,8 +2,8 @@
  * services/taskService.ts
  */
 
-import { get, post } from "@/services/api"
-import type { Task, TaskCreateData, TaskListParams } from "@/types/task"
+import { del, get, post, put } from "@/services/api"
+import type { Task, TaskCreateData, TaskListParams, TaskUpdateData } from "@/types/task"
 
 function buildQuery(params: TaskListParams): string {
   const searchParams = new URLSearchParams()
@@ -23,6 +23,18 @@ export async function getAll(params: TaskListParams = {}): Promise<Task[]> {
   return get<Task[]>(`/api/tasks${buildQuery(params)}`)
 }
 
+export async function getById(id: number): Promise<Task> {
+  return get<Task>(`/api/tasks/${id}`)
+}
+
 export async function create(data: TaskCreateData): Promise<Task> {
   return post<Task>("/api/tasks", data)
+}
+
+export async function update(id: number, data: TaskUpdateData): Promise<Task> {
+  return put<Task>(`/api/tasks/${id}`, data)
+}
+
+export async function remove(id: number): Promise<{ deleted: boolean; id: number }> {
+  return del<{ deleted: boolean; id: number }>(`/api/tasks/${id}`)
 }
